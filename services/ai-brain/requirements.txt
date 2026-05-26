@@ -27,7 +27,7 @@ openai>=1.30,<2.0
 
 # Vector stores
 pinecone-client>=5.0,<6.0
-faiss-cpu>=1.8,<2.0
+faiss-cpu>=1.14.2,<2.0
 
 # Tokenizer
 tiktoken>=0.7,<1.0
