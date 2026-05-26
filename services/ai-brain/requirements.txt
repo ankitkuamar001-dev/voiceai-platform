@@ -30,7 +30,7 @@ pinecone-client>=5.0,<6.0
 faiss-cpu>=1.8,<2.0
 
 # Tokenizer
-tiktoken>=0.7,<1.0
+tiktoken>=0.13.0,<1.0
 
 # PDF parsing (optional, for knowledge ingestion)
 PyPDF2>=3.0,<4.0
