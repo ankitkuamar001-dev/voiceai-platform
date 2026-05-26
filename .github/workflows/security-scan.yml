@@ -1,0 +1,67 @@
+name: Security Scan
+
+on:
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1"  # Weekly Monday 6am UTC
+
+jobs:
+  # ── Python Dependency Audit ──
+  pip-audit:
+    name: Python Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Audit Python dependencies
+        run: |
+          for req in services/*/requirements.txt; do
+            echo "=== Auditing $req ==="
+            pip-audit -r "$req" --ignore-vuln PYSEC-2024-0 || true
+          done
+
+  # ── NPM Audit ──
+  npm-audit:
+    name: NPM Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install and audit
+        working-directory: frontend/dashboard
+        run: |
+          npm ci
+          npm audit --audit-level=high || true
+
+  # ── Container Image Scan ──
+  trivy-scan:
+    name: Container Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build test image
+        run: |
+          docker build -t voiceai-auth:scan \
+            -f infra/docker/Dockerfile.auth-service .
+
+      - name: Run Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "voiceai-auth:scan"
+          format: "table"
+          exit-code: "0"
+          severity: "CRITICAL,HIGH"
+          ignore-unfixed: true

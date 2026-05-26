@@ -1,0 +1,98 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: auth-service-pdb
+  namespace: voiceai
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: auth-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ai-brain-pdb
+  namespace: voiceai
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: ai-brain
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ticket-service-pdb
+  namespace: voiceai
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: ticket-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: analytics-service-pdb
+  namespace: voiceai
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: analytics-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: notification-service-pdb
+  namespace: voiceai
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: notification-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: whatsapp-service-pdb
+  namespace: voiceai
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: whatsapp-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: voice-agent-api-pdb
+  namespace: voiceai
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: voice-agent-api
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: voice-agent-pdb
+  namespace: voiceai
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: voice-agent
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: dashboard-pdb
+  namespace: voiceai
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: dashboard

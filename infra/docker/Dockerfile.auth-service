@@ -1,0 +1,19 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY shared/ /app/shared/
+COPY services/auth-service/ /app/services/auth-service/
+
+RUN pip install --no-cache-dir -r /app/services/auth-service/requirements.txt
+
+ENV PYTHONPATH=/app
+ENV APP_SERVICE=auth-service
+
+EXPOSE 8002
+
+CMD ["uvicorn", "services.auth-service.main:app", "--host", "0.0.0.0", "--port", "8002", "--workers", "2"]

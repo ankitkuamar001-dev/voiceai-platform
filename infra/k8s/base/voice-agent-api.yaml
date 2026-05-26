@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voice-agent-api
+  namespace: voiceai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: voice-agent-api
+  template:
+    metadata:
+      labels:
+        app: voice-agent-api
+    spec:
+      containers:
+        - name: voice-agent-api
+          image: voiceai/voice-agent-api:latest
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: voiceai-config
+            - secretRef:
+                name: voiceai-secrets
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: voice-agent-api
+  namespace: voiceai
+spec:
+  selector:
+    app: voice-agent-api
+  ports:
+    - port: 8000
+      targetPort: 8000

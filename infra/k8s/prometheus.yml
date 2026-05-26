@@ -1,0 +1,54 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'voiceai-ai-brain'
+    static_configs:
+      - targets: ['ai-brain:8001']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  - job_name: 'voiceai-auth-service'
+    static_configs:
+      - targets: ['auth-service:8002']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  - job_name: 'voiceai-ticket-service'
+    static_configs:
+      - targets: ['ticket-service:8003']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  - job_name: 'voiceai-analytics-service'
+    static_configs:
+      - targets: ['analytics-service:8004']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  - job_name: 'voiceai-notification-service'
+    static_configs:
+      - targets: ['notification-service:8005']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+
+  - job_name: 'voiceai-voice-agent-api'
+    static_configs:
+      - targets: ['voice-agent:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  - job_name: 'voiceai-whatsapp-service'
+    static_configs:
+      - targets: ['whatsapp-service:8006']
+    metrics_path: '/metrics'
+    scrape_interval: 10s

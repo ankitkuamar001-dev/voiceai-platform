@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: voiceai-test-postgres
+    environment:
+      POSTGRES_DB: voiceai_test
+      POSTGRES_USER: voiceai
+      POSTGRES_PASSWORD: testpassword
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U voiceai"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: voiceai-test-redis
+    command: redis-server --requirepass testpassword
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "testpassword", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 10

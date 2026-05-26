@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secrets.yaml
+  - postgres.yaml
+  - redis.yaml
+  - ai-brain.yaml
+  - auth-service.yaml
+  - ticket-service.yaml
+  - analytics-service.yaml
+  - notification-service.yaml
+  - voice-agent.yaml
+  - voice-agent-api.yaml
+  - whatsapp-service.yaml
+  - minio.yaml
+  - dashboard.yaml
+  - ingress.yaml
+  - network-policies.yaml
+  - pdb.yaml

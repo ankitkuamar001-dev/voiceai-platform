@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whatsapp-service
+  namespace: voiceai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: whatsapp-service
+  template:
+    metadata:
+      labels:
+        app: whatsapp-service
+    spec:
+      containers:
+        - name: whatsapp-service
+          image: voiceai/whatsapp-service:latest
+          ports:
+            - containerPort: 8006
+          envFrom:
+            - configMapRef:
+                name: voiceai-config
+            - secretRef:
+                name: voiceai-secrets
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8006
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whatsapp-service
+  namespace: voiceai
+spec:
+  selector:
+    app: whatsapp-service
+  ports:
+    - port: 8006
+      targetPort: 8006

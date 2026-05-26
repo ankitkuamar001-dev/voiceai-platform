@@ -1,0 +1,19 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY shared/ /app/shared/
+COPY services/whatsapp-service/ /app/services/whatsapp-service/
+
+RUN pip install --no-cache-dir -r /app/services/whatsapp-service/requirements.txt
+
+ENV PYTHONPATH=/app
+ENV APP_SERVICE=whatsapp-service
+
+EXPOSE 8006
+
+CMD ["uvicorn", "services.whatsapp-service.main:app", "--host", "0.0.0.0", "--port", "8006"]

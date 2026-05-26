@@ -1,0 +1,88 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: voiceai-ingress
+  namespace: voiceai
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "86400"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "86400"
+    nginx.ingress.kubernetes.io/websocket-services: "notification-service"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.voiceai.io
+        - dashboard.voiceai.io
+      secretName: voiceai-tls
+  rules:
+    - host: api.voiceai.io
+      http:
+        paths:
+          - path: /api/v1/auth
+            pathType: Prefix
+            backend:
+              service:
+                name: auth-service
+                port:
+                  number: 8002
+          - path: /api/v1/ai
+            pathType: Prefix
+            backend:
+              service:
+                name: ai-brain
+                port:
+                  number: 8001
+          - path: /api/v1/tickets
+            pathType: Prefix
+            backend:
+              service:
+                name: ticket-service
+                port:
+                  number: 8003
+          - path: /api/v1/analytics
+            pathType: Prefix
+            backend:
+              service:
+                name: analytics-service
+                port:
+                  number: 8004
+          - path: /ws
+            pathType: Prefix
+            backend:
+              service:
+                name: notification-service
+                port:
+                  number: 8005
+          - path: /webhooks/whatsapp
+            pathType: Prefix
+            backend:
+              service:
+                name: whatsapp-service
+                port:
+                  number: 8006
+          - path: /webhooks/twilio
+            pathType: Prefix
+            backend:
+              service:
+                name: voice-agent-api
+                port:
+                  number: 8000
+          - path: /api/v1/recordings
+            pathType: Prefix
+            backend:
+              service:
+                name: voice-agent-api
+                port:
+                  number: 8000
+    - host: dashboard.voiceai.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dashboard
+                port:
+                  number: 3000

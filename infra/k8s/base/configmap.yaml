@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: voiceai-config
+  namespace: voiceai
+data:
+  APP_ENV: "production"
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+  POSTGRES_HOST: "postgres"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "voiceai"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  AI_BRAIN_URL: "http://ai-brain:8001"
+  AUTH_SERVICE_URL: "http://auth-service:8002"
+  TICKET_SERVICE_URL: "http://ticket-service:8003"
+  ANALYTICS_SERVICE_URL: "http://analytics-service:8004"
+  NOTIFICATION_SERVICE_URL: "http://notification-service:8005"
+  CORS_ORIGINS: "https://dashboard.voiceai.io"
+  MINIO_ENDPOINT: "minio:9000"
+  WHATSAPP_API_URL: "https://graph.facebook.com/v17.0"

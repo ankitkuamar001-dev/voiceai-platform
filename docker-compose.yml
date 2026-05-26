@@ -1,0 +1,283 @@
+services:
+  # ── Data Layer ──
+  postgres:
+    image: postgres:16-alpine
+    container_name: voiceai-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-voiceai}
+      POSTGRES_USER: ${POSTGRES_USER:-voiceai}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_pg_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./shared/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-voiceai}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - voiceai
+
+  redis:
+    image: redis:7-alpine
+    container_name: voiceai-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD:-changeme_redis_password} --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-changeme_redis_password}", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - voiceai
+
+  # ── Backend Services ──
+  ai-brain:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.ai-brain
+    container_name: voiceai-ai-brain
+    env_file: .env
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./services/ai-brain:/app/services/ai-brain
+      - ./shared:/app/shared
+      - ./knowledge-base:/app/knowledge-base
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - voiceai
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.auth-service
+    container_name: voiceai-auth-service
+    env_file: .env
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./services/auth-service:/app/services/auth-service
+      - ./shared:/app/shared
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - voiceai
+
+  ticket-service:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.ticket-service
+    container_name: voiceai-ticket-service
+    env_file: .env
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./services/ticket-service:/app/services/ticket-service
+      - ./shared:/app/shared
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - voiceai
+
+  analytics-service:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.analytics-service
+    container_name: voiceai-analytics-service
+    env_file: .env
+    ports:
+      - "8004:8004"
+    volumes:
+      - ./services/analytics-service:/app/services/analytics-service
+      - ./shared:/app/shared
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - voiceai
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.notification-service
+    container_name: voiceai-notification-service
+    env_file: .env
+    ports:
+      - "8005:8005"
+    volumes:
+      - ./services/notification-service:/app/services/notification-service
+      - ./shared:/app/shared
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - voiceai
+
+  voice-agent:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.voice-agent
+    container_name: voiceai-voice-agent
+    env_file: .env
+    volumes:
+      - ./services/voice-agent:/app/services/voice-agent
+      - ./shared:/app/shared
+    depends_on:
+      redis:
+        condition: service_healthy
+      ai-brain:
+        condition: service_started
+    networks:
+      - voiceai
+
+  voice-agent-api:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.voice-agent
+    container_name: voiceai-voice-agent-api
+    env_file: .env
+    command: uvicorn services.voice-agent.api:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./services/voice-agent:/app/services/voice-agent
+      - ./shared:/app/shared
+    depends_on:
+      redis:
+        condition: service_healthy
+      ai-brain:
+        condition: service_started
+    networks:
+      - voiceai
+
+  # ── Frontend ──
+  dashboard:
+    build:
+      context: ./frontend/dashboard
+      dockerfile: Dockerfile
+    container_name: voiceai-dashboard
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+      - NEXT_PUBLIC_WS_URL=ws://localhost:8005
+      - NEXT_PUBLIC_LIVEKIT_URL=${LIVEKIT_URL}
+    volumes:
+      - ./frontend/dashboard/src:/app/src
+      - ./frontend/dashboard/public:/app/public
+    depends_on:
+      - auth-service
+      - ai-brain
+    networks:
+      - voiceai
+
+  # ── API Gateway ──
+  api-gateway:
+    image: nginx:alpine
+    container_name: voiceai-gateway
+    ports:
+      - "8080:80"
+    volumes:
+      - ./services/api-gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - ai-brain
+      - auth-service
+      - ticket-service
+      - analytics-service
+      - notification-service
+    networks:
+      - voiceai
+
+  # ── Monitoring Stack ──
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: voiceai-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infra/k8s/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=15d"
+    networks:
+      - voiceai
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: voiceai-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=voiceai_grafana
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - voiceai
+
+  whatsapp-service:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.whatsapp-service
+    container_name: voiceai-whatsapp-service
+    env_file: .env
+    ports:
+      - "8006:8006"
+    volumes:
+      - ./services/whatsapp-service:/app/services/whatsapp-service
+      - ./shared:/app/shared
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - voiceai
+
+  minio:
+    image: minio/minio:latest
+    container_name: voiceai-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: voiceai
+      MINIO_ROOT_PASSWORD: voiceai_minio
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - voiceai
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+  minio_data:
+
+networks:
+  voiceai:
+    driver: bridge

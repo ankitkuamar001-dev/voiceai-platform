@@ -1,0 +1,20 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libsndfile1 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY shared/ /app/shared/
+COPY services/voice-agent/ /app/services/voice-agent/
+
+RUN pip install --no-cache-dir -r /app/services/voice-agent/requirements.txt
+
+ENV PYTHONPATH=/app
+ENV APP_SERVICE=voice-agent
+
+EXPOSE 8000
+
+CMD ["python", "services/voice-agent/voice_agent.py", "start"]
