@@ -1,10 +1,8 @@
 """Recording API — FastAPI routes for accessing call recordings."""
 
-import os
 import logging
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-import httpx
 
 from recording_manager import get_playback_url
 

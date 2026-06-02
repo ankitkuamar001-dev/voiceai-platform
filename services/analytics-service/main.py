@@ -31,13 +31,12 @@ from sqlalchemy import text
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, "/app")
 
-from shared.schemas.models import AnalyticsEvent, DashboardMetrics, EventCategory
+from shared.schemas.models import AnalyticsEvent, DashboardMetrics
 from shared.utils.database import (
     RedisKeys,
     async_session_factory,
     close_redis,
     engine,
-    get_db,
     get_redis,
 )
 

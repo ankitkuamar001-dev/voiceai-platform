@@ -6,12 +6,12 @@ the caller into LiveKit Cloud.
 
 import logging
 import os
-from fastapi import APIRouter, Request, HTTPException, Form
+from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse
 from twilio.request_validator import RequestValidator
 from twilio.twiml.voice_response import VoiceResponse, Dial, Sip
 
-from .sip_config import TwilioConfig, LiveKitSIPConfig
+from .sip_config import LiveKitSIPConfig
 
 logger = logging.getLogger("voice-agent.twilio")
 

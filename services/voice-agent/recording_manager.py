@@ -8,7 +8,6 @@ import logging
 import os
 import boto3
 from livekit.api import LiveKitAPI, RoomCompositeEgressRequest, EgressOutput, EncodedFileOutput
-import asyncio
 
 logger = logging.getLogger("voice-agent.recording")
 

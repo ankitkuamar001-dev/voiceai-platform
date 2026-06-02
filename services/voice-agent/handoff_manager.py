@@ -1,13 +1,10 @@
 """Human Handoff System — Agent Queue and Context Handover."""
 
-import json
 import logging
-import uuid
 import os
 import sys
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any, Optional
 
-import redis.asyncio as aioredis
 from sqlalchemy import text
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))

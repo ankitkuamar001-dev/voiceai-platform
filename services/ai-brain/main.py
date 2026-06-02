@@ -15,7 +15,6 @@ import os
 import sys
 from contextlib import asynccontextmanager
 from typing import Any
-from uuid import UUID
 
 from dotenv import load_dotenv
 
@@ -36,14 +35,8 @@ from shared.utils.database import (
     close_redis,
 )
 from shared.schemas.models import (
-    ConversationCreate,
     ConversationUpdate,
-    ConversationResponse,
     ConversationStatus,
-    MessageCreate,
-    MessageResponse,
-    PaginatedResponse,
-    SenderType,
 )
 
 from rag_engine import RAGEngine

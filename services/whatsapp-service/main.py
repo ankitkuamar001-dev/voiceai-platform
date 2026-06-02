@@ -8,15 +8,13 @@ import os
 import sys
 import logging
 from datetime import datetime, timezone, timedelta
-from typing import Any
 
-from fastapi import FastAPI, Request, HTTPException, Form, Depends
+from fastapi import FastAPI, Request, HTTPException, Form
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import httpx
 from twilio.rest import Client
-from twilio.request_validator import RequestValidator
 from sqlalchemy import text
 
 sys.path.insert(0, "/app")

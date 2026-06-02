@@ -575,7 +575,7 @@ async def update_ticket(
 
     for key, value in updates.items():
         if key == "first_response_at":
-            set_parts.append(f"first_response_at = COALESCE(first_response_at, :frt)")
+            set_parts.append("first_response_at = COALESCE(first_response_at, :frt)")
             bind_params["frt"] = datetime.now(timezone.utc)
         else:
             set_parts.append(f"{key} = :{key}")

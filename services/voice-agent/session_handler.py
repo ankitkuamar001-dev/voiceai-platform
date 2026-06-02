@@ -15,7 +15,6 @@ from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from typing import Any
 
-import redis.asyncio as aioredis
 
 # Shared utilities
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))

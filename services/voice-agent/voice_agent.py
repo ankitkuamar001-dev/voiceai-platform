@@ -12,7 +12,6 @@ ai-brain service via HTTP.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import os
 import sys
@@ -28,7 +27,6 @@ load_dotenv()
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 from livekit.agents import AgentSession, Agent, RoomInputOptions, cli, llm
-from livekit.agents.voice import VoiceSession
 from livekit.plugins import openai, silero, deepgram, cartesia
 
 from agent_tools import (
@@ -42,7 +40,7 @@ from agent_tools import (
     conversation_id_ctx,
     org_id_ctx
 )
-from session_handler import SessionState, save_state, load_state
+from session_handler import SessionState, save_state
 from escalation_engine import EscalationEngine
 from recording_manager import start_recording, stop_recording
 
