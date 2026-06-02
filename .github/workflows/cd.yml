@@ -19,7 +19,7 @@ jobs:
     environment: staging
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
@@ -59,7 +59,7 @@ jobs:
     environment: production
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
