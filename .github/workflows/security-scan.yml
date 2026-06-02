@@ -6,6 +6,9 @@ on:
   schedule:
     - cron: "0 6 * * 1"  # Weekly Monday 6am UTC
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   # ── Python Dependency Audit ──
   pip-audit:

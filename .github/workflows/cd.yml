@@ -9,6 +9,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ghcr.io/${{ github.repository }}
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   deploy-staging:
@@ -23,13 +24,25 @@ jobs:
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
       
+      - name: Check Staging Secret
+        id: check_secret
+        run: |
+          if [ "${{ secrets.KUBE_CONFIG_STAGING }}" == "" ]; then
+            echo "has_secret=false" >> $GITHUB_OUTPUT
+            echo "KUBE_CONFIG_STAGING is missing! Skipping deployment."
+          else
+            echo "has_secret=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Set Kubernetes Context
+        if: steps.check_secret.outputs.has_secret == 'true'
         uses: azure/k8s-set-context@v4
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBE_CONFIG_STAGING }}
           
       - name: Deploy to Staging using Kustomize
+        if: steps.check_secret.outputs.has_secret == 'true'
         working-directory: infra/k8s/overlays/staging
         run: |
           # Ensure kustomize is available
@@ -51,13 +64,25 @@ jobs:
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
         
+      - name: Check Production Secret
+        id: check_secret
+        run: |
+          if [ "${{ secrets.KUBE_CONFIG_PRODUCTION }}" == "" ]; then
+            echo "has_secret=false" >> $GITHUB_OUTPUT
+            echo "KUBE_CONFIG_PRODUCTION is missing! Skipping deployment."
+          else
+            echo "has_secret=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Set Kubernetes Context
+        if: steps.check_secret.outputs.has_secret == 'true'
         uses: azure/k8s-set-context@v4
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBE_CONFIG_PRODUCTION }}
           
       - name: Deploy to Production using Kustomize
+        if: steps.check_secret.outputs.has_secret == 'true'
         working-directory: infra/k8s/overlays/production
         run: |
           # Ensure kustomize is available
