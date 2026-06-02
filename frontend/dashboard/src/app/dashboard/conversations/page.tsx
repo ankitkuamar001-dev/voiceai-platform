@@ -1,9 +1,8 @@
 "use client";
 import { useState } from "react";
-import { Search, Filter, Phone, MessageSquare, Mail, MessageCircle } from "lucide-react";
+import { Search, Phone, MessageSquare, Mail, MessageCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 const mockConversations = [

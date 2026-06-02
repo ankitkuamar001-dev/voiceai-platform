@@ -1,5 +1,5 @@
 "use client";
-import { Phone, PhoneIncoming, BrainCircuit, SmilePlus, Users, Clock } from "lucide-react";
+import { Phone, PhoneIncoming, BrainCircuit, SmilePlus } from "lucide-react";
 import { MetricCard, Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChartLine } from "@/components/charts/line-chart";
