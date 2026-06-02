@@ -52,9 +52,10 @@ async def client():
     _fake_redis = FakeRedis()
 
     # Patch database module before import
-    with patch("shared.utils.database.engine") as mock_engine, \
-         patch("shared.utils.database.get_redis", return_value=_fake_redis), \
-         patch("shared.utils.database.close_redis"):
+    import shared.utils.database
+    with patch.object(shared.utils.database, "engine") as mock_engine, \
+         patch.object(shared.utils.database, "get_redis", return_value=_fake_redis), \
+         patch.object(shared.utils.database, "close_redis"):
 
         # Mock engine for lifespan
         mock_conn = AsyncMock()
