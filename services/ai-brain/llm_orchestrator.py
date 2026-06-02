@@ -49,7 +49,9 @@ def _load_system_prompt() -> str:
     try:
         return _PROMPT_PATH.read_text(encoding="utf-8").strip()
     except FileNotFoundError:
-        logger.warning("System prompt file not found at %s — using default", _PROMPT_PATH)
+        logger.warning(
+            "System prompt file not found at %s — using default", _PROMPT_PATH
+        )
         return _DEFAULT_SYSTEM_PROMPT
 
 
@@ -105,7 +107,9 @@ class LLMOrchestrator:
 
         # Invoke the LLM
         response = await self._llm.ainvoke(lc_messages)
-        response_text = response.content if hasattr(response, "content") else str(response)
+        response_text = (
+            response.content if hasattr(response, "content") else str(response)
+        )
 
         # Update buffer
         if conversation_id is not None:
@@ -160,7 +164,9 @@ class LLMOrchestrator:
         )
 
         lc_messages = [
-            SystemMessage(content="You classify customer intents. Respond only with JSON."),
+            SystemMessage(
+                content="You classify customer intents. Respond only with JSON."
+            ),
             HumanMessage(content=classification_prompt),
         ]
 

@@ -172,9 +172,7 @@ class ConnectionManager:
         """Send to a specific user; returns number of deliveries."""
         async with self._lock:
             clients = [
-                c
-                for c in self._connections.get(org_id, [])
-                if c.user_id == user_id
+                c for c in self._connections.get(org_id, []) if c.user_id == user_id
             ]
 
         sent = 0
@@ -227,7 +225,9 @@ class ConnectionManager:
                     ConnectionInfo(
                         org_id=c.org_id,
                         user_id=c.user_id,
-                        connected_at=datetime.utcfromtimestamp(c.connected_at).isoformat(),
+                        connected_at=datetime.utcfromtimestamp(
+                            c.connected_at
+                        ).isoformat(),
                         last_pong=datetime.utcfromtimestamp(c.last_pong).isoformat(),
                     )
                 )
@@ -364,6 +364,7 @@ app.add_middleware(
 )
 
 from shared.utils.metrics import setup_metrics
+
 setup_metrics(app)
 
 
@@ -393,7 +394,9 @@ async def websocket_endpoint(websocket: WebSocket, org_id: str):
     # 1. Extract & verify JWT from query params
     token = websocket.query_params.get("token")
     if not token:
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Missing token")
+        await websocket.close(
+            code=status.WS_1008_POLICY_VIOLATION, reason="Missing token"
+        )
         return
 
     try:

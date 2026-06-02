@@ -100,6 +100,7 @@ app.add_middleware(
 )
 
 from shared.utils.metrics import setup_metrics
+
 setup_metrics(app)
 
 
@@ -481,10 +482,13 @@ async def update_conversation(conversation_id: str, req: ConversationUpdate):
                     # Store tags as a JSON array
                     set_parts.append(f"{key} = :val_{key}::jsonb")
                     import json as _json
+
                     params[f"val_{key}"] = _json.dumps(value)
                 else:
                     set_parts.append(f"{key} = :val_{key}")
-                    params[f"val_{key}"] = value if not isinstance(value, list) else str(value)
+                    params[f"val_{key}"] = (
+                        value if not isinstance(value, list) else str(value)
+                    )
 
             set_parts.append("updated_at = NOW()")
             set_clause = ", ".join(set_parts)

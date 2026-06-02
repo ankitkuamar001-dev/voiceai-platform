@@ -38,7 +38,7 @@ from agent_tools import (
     search_knowledge_base,
     book_appointment,
     conversation_id_ctx,
-    org_id_ctx
+    org_id_ctx,
 )
 from session_handler import SessionState, save_state
 from escalation_engine import EscalationEngine
@@ -205,7 +205,9 @@ class CustomerSupportAgent(Agent):
             tools=TOOL_DEFINITIONS,
         )
         self._conversation_id: str = str(uuid.uuid4())
-        self._org_id: str = os.getenv("DEFAULT_ORG_ID", "00000000-0000-0000-0000-000000000000")
+        self._org_id: str = os.getenv(
+            "DEFAULT_ORG_ID", "00000000-0000-0000-0000-000000000000"
+        )
         self._state: SessionState | None = None
         self._egress_id: str | None = None
         self._escalation_engine = EscalationEngine(self._org_id)
@@ -217,15 +219,18 @@ class CustomerSupportAgent(Agent):
         # Set context variables for tools
         conversation_id_ctx.set(self._conversation_id)
         org_id_ctx.set(self._org_id)
-        
+
         logger.info("Agent entered room – conversation %s", self._conversation_id)
         self._state = SessionState(conversation_id=self._conversation_id)
         await save_state(self._state)
-        await self._notify_brain("conversation_start", {
-            "conversation_id": self._conversation_id,
-            "started_at": datetime.now(timezone.utc).isoformat(),
-        })
-        
+        await self._notify_brain(
+            "conversation_start",
+            {
+                "conversation_id": self._conversation_id,
+                "started_at": datetime.now(timezone.utc).isoformat(),
+            },
+        )
+
         # Start LiveKit recording
         # self.room is available on the Agent instance once connected
         if hasattr(self, "room") and self.room.name:
@@ -235,12 +240,15 @@ class CustomerSupportAgent(Agent):
         """Called when the agent leaves the room."""
         logger.info("Agent exiting room – conversation %s", self._conversation_id)
         if self._state:
-            await self._notify_brain("conversation_end", {
-                "conversation_id": self._conversation_id,
-                "turn_count": self._state.turn_count,
-                "ended_at": datetime.now(timezone.utc).isoformat(),
-            })
-            
+            await self._notify_brain(
+                "conversation_end",
+                {
+                    "conversation_id": self._conversation_id,
+                    "turn_count": self._state.turn_count,
+                    "ended_at": datetime.now(timezone.utc).isoformat(),
+                },
+            )
+
         if self._egress_id:
             await stop_recording(self._egress_id)
 
@@ -264,28 +272,35 @@ class CustomerSupportAgent(Agent):
             mock_intent = "inquiry"
             self._state.sentiment_history.append(mock_sentiment)
             self._state.intent_history.append(mock_intent)
-            
+
             decision = self._escalation_engine.evaluate(
                 turn_count=self._state.turn_count,
                 sentiment_scores=self._state.sentiment_history,
                 intent_history=self._state.intent_history,
                 latest_user_utterance=text,
-                customer_tier=self._state.customer_tier
+                customer_tier=self._state.customer_tier,
             )
-            
-            if decision.should_escalate and self._state.escalation_status not in ("pending", "escalated"):
-                logger.warning("Escalation triggered for conversation %s: %s", self._conversation_id, decision.reason)
+
+            if decision.should_escalate and self._state.escalation_status not in (
+                "pending",
+                "escalated",
+            ):
+                logger.warning(
+                    "Escalation triggered for conversation %s: %s",
+                    self._conversation_id,
+                    decision.reason,
+                )
                 self._state.escalation_status = "pending"
                 self._state.escalation_reason = decision.reason
                 self._state.escalation_signals = decision.signals
                 await save_state(self._state)
-                
+
                 # Auto-trigger handoff tool via the agent (inject system message)
                 # This makes the LLM gracefully acknowledge and transfer
                 self.chat_ctx.messages.append(
                     llm.ChatMessage(
                         role="system",
-                        content=f"SYSTEM INSTRUCTION: The escalation engine has triggered a human handoff due to {decision.reason}. Immediately call the request_human_handoff tool, explaining to the user that you are transferring them to a live agent."
+                        content=f"SYSTEM INSTRUCTION: The escalation engine has triggered a human handoff due to {decision.reason}. Immediately call the request_human_handoff tool, explaining to the user that you are transferring them to a live agent.",
                     )
                 )
 
@@ -308,7 +323,9 @@ class CustomerSupportAgent(Agent):
             "content_type": "text",
             "sender_type": sender_type,
             "conversation_id": self._conversation_id,
-            "org_id": os.getenv("DEFAULT_ORG_ID", "00000000-0000-0000-0000-000000000000"),
+            "org_id": os.getenv(
+                "DEFAULT_ORG_ID", "00000000-0000-0000-0000-000000000000"
+            ),
             "sequence_num": self._state.turn_count if self._state else 0,
         }
         try:

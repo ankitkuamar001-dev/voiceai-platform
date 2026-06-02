@@ -30,6 +30,7 @@ def redact_pii(text: str) -> str:
 
     Handles: email addresses, phone numbers, SSNs, credit cards, IP addresses.
     """
+
     # Email: user@domain.com → u***@d***.com
     def _redact_email(m: re.Match) -> str:
         email = m.group()

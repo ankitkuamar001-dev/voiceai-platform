@@ -36,10 +36,10 @@ jobs:
 
       - name: Set Kubernetes Context
         if: steps.check_secret.outputs.has_secret == 'true'
-        uses: azure/k8s-set-context@v4
-        with:
-          method: kubeconfig
-          kubeconfig: ${{ secrets.KUBE_CONFIG_STAGING }}
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG_STAGING }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
           
       - name: Deploy to Staging using Kustomize
         if: steps.check_secret.outputs.has_secret == 'true'
@@ -76,10 +76,10 @@ jobs:
 
       - name: Set Kubernetes Context
         if: steps.check_secret.outputs.has_secret == 'true'
-        uses: azure/k8s-set-context@v4
-        with:
-          method: kubeconfig
-          kubeconfig: ${{ secrets.KUBE_CONFIG_PRODUCTION }}
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG_PRODUCTION }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
           
       - name: Deploy to Production using Kustomize
         if: steps.check_secret.outputs.has_secret == 'true'

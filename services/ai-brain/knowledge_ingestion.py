@@ -146,12 +146,14 @@ async def ingest(directory: str, org_id: str = "default") -> dict[str, Any]:
             continue
 
         texts.append(content)
-        metadatas.append({
-            "source": str(file_path),
-            "filename": file_path.name,
-            "extension": ext,
-            "org_id": org_id,
-        })
+        metadatas.append(
+            {
+                "source": str(file_path),
+                "filename": file_path.name,
+                "extension": ext,
+                "org_id": org_id,
+            }
+        )
 
     if not texts:
         logger.warning("No extractable text found")

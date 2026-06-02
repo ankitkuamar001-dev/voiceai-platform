@@ -26,7 +26,7 @@ def _validate_twilio_request(request: Request, body: dict):
     validator = RequestValidator(os.getenv("TWILIO_AUTH_TOKEN", ""))
     signature = request.headers.get("X-Twilio-Signature", "")
     url = str(request.url)
-    
+
     # Twilio sends the port in X-Forwarded-Port if behind proxy, but sometimes
     # the URL mismatch causes validation failures. For production this needs to be robust.
     # We use the raw request url and body params.
@@ -48,27 +48,27 @@ async def twilio_incoming(
     """
     body = await request.form()
     # _validate_twilio_request(request, dict(body))
-    
+
     logger.info("Incoming Twilio call: %s from %s to %s", CallSid, From, To)
-    
+
     lk_config = LiveKitSIPConfig()
-    
+
     # Extract the domain from livekit_url, e.g. wss://project.livekit.cloud -> project.livekit.cloud
     lk_domain = lk_config.livekit_url.replace("wss://", "").replace("https://", "")
     # Usually the LiveKit SIP domain is sip.livekit.cloud, but it depends on the setup.
     # We will use the standard sip.livekit.cloud for Cloud instances, or the custom domain.
     sip_domain = os.getenv("LIVEKIT_SIP_DOMAIN", "sip.livekit.cloud")
-    
+
     # Generate TwiML
     response = VoiceResponse()
-    
+
     # We dial the LiveKit SIP trunk. The username/password are the Twilio Account SID and Auth Token.
     # We pass the CallSid in a custom header so the Voice Agent can link the session.
     dial = Dial(answer_on_bridge=True)
     sip = Sip(
         f"sip:{To}@{sip_domain}",
         username=os.getenv("TWILIO_ACCOUNT_SID", ""),
-        password=os.getenv("TWILIO_AUTH_TOKEN", "")
+        password=os.getenv("TWILIO_AUTH_TOKEN", ""),
     )
     # Add custom headers
     # Twilio SIP Dial does not easily support custom X-Headers in this exact python syntax directly inside Sip(),
@@ -76,10 +76,10 @@ async def twilio_incoming(
     # But LiveKit expects X-Twilio-CallSid as an actual header.
     # Twilio sends custom headers via the SIP URI parameters.
     # For now, we will rely on LiveKit's SIP Trunk settings which we mapped in sip_config.py
-    
+
     dial.append(sip)
     response.append(dial)
-    
+
     return HTMLResponse(content=str(response), media_type="application/xml")
 
 
@@ -98,5 +98,7 @@ async def twilio_status(
 async def twilio_fallback(request: Request):
     """Fallback handler for Twilio errors."""
     response = VoiceResponse()
-    response.say("We're sorry, but the support system is currently unavailable. Please try again later.")
+    response.say(
+        "We're sorry, but the support system is currently unavailable. Please try again later."
+    )
     return HTMLResponse(content=str(response), media_type="application/xml")

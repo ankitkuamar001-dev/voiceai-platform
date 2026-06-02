@@ -29,9 +29,11 @@ def get_request_id() -> str:
 
 # ── PII Redaction (lazy import to avoid circular deps) ──
 
+
 def _redact(text: str) -> str:
     try:
         from shared.utils.security import redact_pii
+
         return redact_pii(text)
     except ImportError:
         return text
@@ -150,10 +152,7 @@ class RequestIdMiddleware:
 
         # Extract or generate request ID
         headers = dict(scope.get("headers", []))
-        request_id = (
-            headers.get(b"x-request-id", b"").decode()
-            or str(uuid.uuid4())
-        )
+        request_id = headers.get(b"x-request-id", b"").decode() or str(uuid.uuid4())
 
         # Store in context var for this request
         token = _request_id_var.set(request_id)

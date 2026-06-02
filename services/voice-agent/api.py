@@ -24,10 +24,12 @@ app.add_middleware(
 )
 
 from shared.utils.metrics import setup_metrics
+
 setup_metrics(app)
 
 app.include_router(twilio_router, tags=["twilio"])
 app.include_router(recording_router, tags=["recording"])
+
 
 @app.get("/health")
 def health_check():

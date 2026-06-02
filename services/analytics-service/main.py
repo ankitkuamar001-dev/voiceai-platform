@@ -169,6 +169,7 @@ app.add_middleware(
 )
 
 from shared.utils.metrics import setup_metrics
+
 setup_metrics(app)
 
 
@@ -235,7 +236,9 @@ async def health_check():
 # ── 1. Dashboard ──
 
 
-@app.get("/api/v1/analytics/dashboard", response_model=DashboardMetrics, tags=["analytics"])
+@app.get(
+    "/api/v1/analytics/dashboard", response_model=DashboardMetrics, tags=["analytics"]
+)
 async def get_dashboard(
     org_id: str = Query(..., description="Organisation UUID"),
     start_date: date = Query(default=None),
@@ -314,8 +317,7 @@ async def get_dashboard(
                 {"org": org_id, "start": start, "end": end},
             )
             calls_by_hour = [
-                {"hour": r["hr"], "count": r["cnt"]}
-                for r in hour_q.mappings().all()
+                {"hour": r["hr"], "count": r["cnt"]} for r in hour_q.mappings().all()
             ]
 
             # Sentiment distribution
@@ -394,7 +396,11 @@ async def get_dashboard(
 # ── 2. Conversation analytics ──
 
 
-@app.get("/api/v1/analytics/conversations", response_model=ConversationAnalytics, tags=["analytics"])
+@app.get(
+    "/api/v1/analytics/conversations",
+    response_model=ConversationAnalytics,
+    tags=["analytics"],
+)
 async def conversation_analytics(
     org_id: str = Query(...),
     start_date: date = Query(default=None),
@@ -493,7 +499,9 @@ async def conversation_analytics(
 # ── 3. Sentiment ──
 
 
-@app.get("/api/v1/analytics/sentiment", response_model=SentimentTrend, tags=["analytics"])
+@app.get(
+    "/api/v1/analytics/sentiment", response_model=SentimentTrend, tags=["analytics"]
+)
 async def sentiment_trends(
     org_id: str = Query(...),
     start_date: date = Query(default=None),
@@ -559,7 +567,11 @@ async def sentiment_trends(
 # ── 4. Agent performance ──
 
 
-@app.get("/api/v1/analytics/agents", response_model=AgentPerformanceResponse, tags=["analytics"])
+@app.get(
+    "/api/v1/analytics/agents",
+    response_model=AgentPerformanceResponse,
+    tags=["analytics"],
+)
 async def agent_performance(
     org_id: str = Query(...),
     start_date: date = Query(default=None),
@@ -617,7 +629,9 @@ async def agent_performance(
 # ── 5. Intents ──
 
 
-@app.get("/api/v1/analytics/intents", response_model=IntentDistribution, tags=["analytics"])
+@app.get(
+    "/api/v1/analytics/intents", response_model=IntentDistribution, tags=["analytics"]
+)
 async def intent_distribution(
     org_id: str = Query(...),
     start_date: date = Query(default=None),
@@ -724,7 +738,9 @@ async def sla_compliance(
                 total_tickets=total,
                 breached=breached,
                 compliance_pct=compliance,
-                avg_first_response_minutes=round(float(m["avg_fr"] or 0), 1) if m else 0,
+                avg_first_response_minutes=round(float(m["avg_fr"] or 0), 1)
+                if m
+                else 0,
                 avg_resolution_minutes=round(float(m["avg_res"] or 0), 1) if m else 0,
                 by_priority=ChartData(
                     labels=[f"P{r['priority']}" for r in pri_rows],
@@ -765,7 +781,9 @@ async def record_event(event: AnalyticsEvent):
                     "ecat": event.event_category.value,
                     "atype": event.actor_type,
                     "aid": str(event.actor_id) if event.actor_id else None,
-                    "cid": str(event.conversation_id) if event.conversation_id else None,
+                    "cid": str(event.conversation_id)
+                    if event.conversation_id
+                    else None,
                     "tid": str(event.ticket_id) if event.ticket_id else None,
                     "props": json.dumps(event.properties),
                     "nval": event.numeric_value,
@@ -794,7 +812,9 @@ async def record_event(event: AnalyticsEvent):
 
     except Exception as exc:
         logger.error("Failed to record event: %s", exc)
-        raise HTTPException(status_code=500, detail="Failed to record analytics event") from exc
+        raise HTTPException(
+            status_code=500, detail="Failed to record analytics event"
+        ) from exc
 
 
 # ── 8. CSV export ──
@@ -803,7 +823,9 @@ async def record_event(event: AnalyticsEvent):
 @app.get("/api/v1/analytics/export", tags=["analytics"])
 async def export_csv(
     org_id: str = Query(...),
-    entity: str = Query("conversations", description="conversations | tickets | events"),
+    entity: str = Query(
+        "conversations", description="conversations | tickets | events"
+    ),
     start_date: date = Query(default=None),
     end_date: date = Query(default=None),
     limit: int = Query(10000, ge=1, le=50000),
@@ -858,7 +880,9 @@ async def export_csv(
             rows = result.mappings().all()
 
         if not rows:
-            raise HTTPException(status_code=404, detail="No data found for the given filters")
+            raise HTTPException(
+                status_code=404, detail="No data found for the given filters"
+            )
 
         # Build CSV in-memory
         output = io.StringIO()

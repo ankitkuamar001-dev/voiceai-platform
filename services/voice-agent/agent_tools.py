@@ -17,7 +17,10 @@ import contextvars
 logger = logging.getLogger("voice-agent.tools")
 
 conversation_id_ctx = contextvars.ContextVar("conversation_id", default="")
-org_id_ctx = contextvars.ContextVar("org_id", default=os.getenv("DEFAULT_ORG_ID", "00000000-0000-0000-0000-000000000000"))
+org_id_ctx = contextvars.ContextVar(
+    "org_id",
+    default=os.getenv("DEFAULT_ORG_ID", "00000000-0000-0000-0000-000000000000"),
+)
 
 from handoff_manager import request_handoff
 
@@ -144,12 +147,12 @@ async def request_human_handoff(reason: str) -> str:
     try:
         conv_id = conversation_id_ctx.get()
         org_id = org_id_ctx.get()
-        
+
         result = await request_handoff(org_id=org_id, conversation_id=conv_id)
-        
+
         position = result.get("position", 1)
         wait_time = result.get("estimated_wait_sec", 120) // 60
-        
+
         return (
             f"I'm transferring you to a live agent now. "
             f"You are number {position} in the queue. "
@@ -185,7 +188,9 @@ async def process_refund(order_id: str, reason: str) -> str:
         )
     except httpx.HTTPStatusError as exc:
         if exc.response.status_code == 404:
-            return f"I couldn't find order {order_id}. Could you verify the order number?"
+            return (
+                f"I couldn't find order {order_id}. Could you verify the order number?"
+            )
         if exc.response.status_code == 409:
             return f"It looks like a refund for order {order_id} has already been processed."
         logger.error("Refund processing failed: %s", exc)

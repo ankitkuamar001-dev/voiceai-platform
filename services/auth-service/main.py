@@ -243,6 +243,7 @@ app.add_middleware(
 )
 
 from shared.utils.metrics import setup_metrics
+
 setup_metrics(app)
 
 
@@ -251,7 +252,11 @@ setup_metrics(app)
 
 @app.get("/health", tags=["health"])
 async def health_check():
-    return {"status": "healthy", "service": "auth-service", "timestamp": datetime.now(timezone.utc).isoformat()}
+    return {
+        "status": "healthy",
+        "service": "auth-service",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 # ── Register ──
@@ -279,7 +284,9 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
         {"email": body.email, "oid": str(body.org_id)},
     )
     if dup.first() is not None:
-        raise HTTPException(status_code=409, detail="Email already registered in this organization")
+        raise HTTPException(
+            status_code=409, detail="Email already registered in this organization"
+        )
 
     user_id = uuid.uuid4()
     hashed = pwd_context.hash(body.password)
@@ -507,7 +514,9 @@ async def list_users(
     where = " AND ".join(conditions)
 
     # Total count
-    count_result = await db.execute(text(f"SELECT count(*) FROM users WHERE {where}"), params)  # noqa: S608
+    count_result = await db.execute(
+        text(f"SELECT count(*) FROM users WHERE {where}"), params
+    )  # noqa: S608
     total = count_result.scalar_one()
 
     offset = (page - 1) * page_size

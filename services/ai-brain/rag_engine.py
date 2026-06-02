@@ -30,7 +30,9 @@ CHUNK_SIZE = 500
 CHUNK_OVERLAP = 50
 
 # Base path for knowledge-base documents
-KB_DIR = Path(os.getenv("KB_DIR", os.path.join(os.path.dirname(__file__), "knowledge-base")))
+KB_DIR = Path(
+    os.getenv("KB_DIR", os.path.join(os.path.dirname(__file__), "knowledge-base"))
+)
 
 
 class RAGEngine:
@@ -73,7 +75,9 @@ class RAGEngine:
                 embedding=self._embeddings,
                 text_key="text",
             )
-            logger.info("Pinecone vector store initialized (index=%s)", PINECONE_INDEX_NAME)
+            logger.info(
+                "Pinecone vector store initialized (index=%s)", PINECONE_INDEX_NAME
+            )
         except Exception as exc:
             logger.warning("Pinecone init failed (%s), falling back to FAISS", exc)
             await self._init_faiss()
@@ -176,9 +180,7 @@ class RAGEngine:
 
     # ── Internal helpers ──
 
-    async def _vector_search(
-        self, query: str, top_k: int = 10
-    ) -> list[dict[str, Any]]:
+    async def _vector_search(self, query: str, top_k: int = 10) -> list[dict[str, Any]]:
         """Run vector similarity search."""
         try:
             docs_with_scores = self._vector_store.similarity_search_with_score(
@@ -186,20 +188,22 @@ class RAGEngine:
             )
             results = []
             for doc, score in docs_with_scores:
-                results.append({
-                    "content": doc.page_content,
-                    "score": float(1 - score) if score <= 1 else float(1 / (1 + score)),
-                    "metadata": doc.metadata,
-                    "source": "vector",
-                })
+                results.append(
+                    {
+                        "content": doc.page_content,
+                        "score": float(1 - score)
+                        if score <= 1
+                        else float(1 / (1 + score)),
+                        "metadata": doc.metadata,
+                        "source": "vector",
+                    }
+                )
             return results
         except Exception as exc:
             logger.error("Vector search failed: %s", exc)
             return []
 
-    def _keyword_search(
-        self, query: str, top_k: int = 5
-    ) -> list[dict[str, Any]]:
+    def _keyword_search(self, query: str, top_k: int = 5) -> list[dict[str, Any]]:
         """Simple keyword matching across in-memory documents."""
         query_terms = set(query.lower().split())
         scored: list[tuple[float, dict[str, Any]]] = []
@@ -209,12 +213,17 @@ class RAGEngine:
             matches = sum(1 for term in query_terms if term in content_lower)
             if matches > 0:
                 score = matches / max(len(query_terms), 1)
-                scored.append((score, {
-                    "content": doc["content"],
-                    "score": score,
-                    "metadata": doc.get("metadata", {}),
-                    "source": "keyword",
-                }))
+                scored.append(
+                    (
+                        score,
+                        {
+                            "content": doc["content"],
+                            "score": score,
+                            "metadata": doc.get("metadata", {}),
+                            "source": "keyword",
+                        },
+                    )
+                )
 
         scored.sort(key=lambda x: x[0], reverse=True)
         return [item for _, item in scored[:top_k]]

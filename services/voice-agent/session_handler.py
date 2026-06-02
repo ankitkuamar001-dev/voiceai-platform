@@ -24,7 +24,9 @@ logger = logging.getLogger("voice-agent.session")
 
 # ── Configuration ──
 
-SENTIMENT_ESCALATION_THRESHOLD = float(os.getenv("SENTIMENT_ESCALATION_THRESHOLD", "-0.5"))
+SENTIMENT_ESCALATION_THRESHOLD = float(
+    os.getenv("SENTIMENT_ESCALATION_THRESHOLD", "-0.5")
+)
 MAX_TURNS_BEFORE_ESCALATION = int(os.getenv("MAX_TURNS_BEFORE_ESCALATION", "20"))
 STATE_TTL_SECONDS = int(os.getenv("SESSION_STATE_TTL", "7200"))  # 2 hours
 
@@ -49,8 +51,12 @@ class SessionState:
     customer_tier: str = "standard"
     tags: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
-    started_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    last_activity_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    started_at: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
+    last_activity_at: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
 
     # ── Computed properties ──
 
@@ -78,10 +84,20 @@ class SessionState:
         """Deserialize from a dictionary (ignores computed fields)."""
         # Strip computed keys that aren't constructor args
         known_keys = {
-            "conversation_id", "customer_id", "customer_name", "customer_email",
-            "sentiment_history", "turn_count", "escalation_status",
-            "escalation_reason", "escalation_signals", "intent_history",
-            "customer_tier", "tags", "metadata", "started_at",
+            "conversation_id",
+            "customer_id",
+            "customer_name",
+            "customer_email",
+            "sentiment_history",
+            "turn_count",
+            "escalation_status",
+            "escalation_reason",
+            "escalation_signals",
+            "intent_history",
+            "customer_tier",
+            "tags",
+            "metadata",
+            "started_at",
             "last_activity_at",
         }
         filtered = {k: v for k, v in data.items() if k in known_keys}
@@ -191,9 +207,7 @@ def detect_escalation(state: SessionState) -> bool:
             MAX_TURNS_BEFORE_ESCALATION,
             state.conversation_id,
         )
-        state.escalation_reason = (
-            f"Extended conversation ({state.turn_count} turns)"
-        )
+        state.escalation_reason = f"Extended conversation ({state.turn_count} turns)"
         return True
 
     return False

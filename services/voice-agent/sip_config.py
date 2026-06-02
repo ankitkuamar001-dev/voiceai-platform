@@ -23,10 +23,14 @@ logger = logging.getLogger("voice-agent.sip")
 class TwilioConfig:
     """Twilio account credentials loaded from environment."""
 
-    account_sid: str = field(default_factory=lambda: os.getenv("TWILIO_ACCOUNT_SID", ""))
+    account_sid: str = field(
+        default_factory=lambda: os.getenv("TWILIO_ACCOUNT_SID", "")
+    )
     auth_token: str = field(default_factory=lambda: os.getenv("TWILIO_AUTH_TOKEN", ""))
     sip_domain: str = field(default_factory=lambda: os.getenv("TWILIO_SIP_DOMAIN", ""))
-    phone_number: str = field(default_factory=lambda: os.getenv("TWILIO_PHONE_NUMBER", ""))
+    phone_number: str = field(
+        default_factory=lambda: os.getenv("TWILIO_PHONE_NUMBER", "")
+    )
 
     @property
     def is_configured(self) -> bool:
@@ -38,13 +42,21 @@ class LiveKitSIPConfig:
     """LiveKit SIP integration settings."""
 
     livekit_url: str = field(default_factory=lambda: os.getenv("LIVEKIT_URL", ""))
-    livekit_api_key: str = field(default_factory=lambda: os.getenv("LIVEKIT_API_KEY", ""))
-    livekit_api_secret: str = field(default_factory=lambda: os.getenv("LIVEKIT_API_SECRET", ""))
-    sip_trunk_id: str = field(default_factory=lambda: os.getenv("LIVEKIT_SIP_TRUNK_ID", ""))
+    livekit_api_key: str = field(
+        default_factory=lambda: os.getenv("LIVEKIT_API_KEY", "")
+    )
+    livekit_api_secret: str = field(
+        default_factory=lambda: os.getenv("LIVEKIT_API_SECRET", "")
+    )
+    sip_trunk_id: str = field(
+        default_factory=lambda: os.getenv("LIVEKIT_SIP_TRUNK_ID", "")
+    )
 
     @property
     def is_configured(self) -> bool:
-        return bool(self.livekit_url and self.livekit_api_key and self.livekit_api_secret)
+        return bool(
+            self.livekit_url and self.livekit_api_key and self.livekit_api_secret
+        )
 
 
 # ── SIP Trunk Setup ──
@@ -118,7 +130,12 @@ def route_call(called_number: str) -> dict[str, str]:
     """
     route = ROUTING_TABLE.get(called_number)
     if route:
-        logger.info("Routing call to %s → org %s (%s)", called_number, route["org_id"], route["language"])
+        logger.info(
+            "Routing call to %s → org %s (%s)",
+            called_number,
+            route["org_id"],
+            route["language"],
+        )
         return route
 
     # Default routing
@@ -163,7 +180,9 @@ async def register_sip_trunk() -> dict[str, Any] | None:
             )
             resp.raise_for_status()
             result = resp.json()
-            logger.info("SIP trunk registered: %s", result.get("trunk", {}).get("sip_trunk_id"))
+            logger.info(
+                "SIP trunk registered: %s", result.get("trunk", {}).get("sip_trunk_id")
+            )
             return result
     except Exception as exc:
         logger.error("Failed to register SIP trunk: %s", exc)

@@ -12,11 +12,14 @@ from shared.utils.database import async_session_factory, get_redis
 
 logger = logging.getLogger("voice-agent.handoff")
 
-NOTIFICATION_URL = os.getenv("NOTIFICATION_SERVICE_URL", "http://notification-service:8005")
+NOTIFICATION_URL = os.getenv(
+    "NOTIFICATION_SERVICE_URL", "http://notification-service:8005"
+)
+
 
 class AgentQueue:
     """Manages queues of customers waiting for human agents."""
-    
+
     def __init__(self, org_id: str):
         self.org_id = org_id
 
@@ -44,13 +47,13 @@ class AgentQueue:
 
 
 async def request_handoff(
-    org_id: str, 
-    conversation_id: str, 
+    org_id: str,
+    conversation_id: str,
     customer_id: Optional[str] = None,
-    escalation_id: Optional[str] = None
+    escalation_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Initiates a human handoff, creates DB record, adds to queue."""
-    
+
     # 1. Create DB record
     handoff_id = None
     async with async_session_factory() as session:
@@ -61,21 +64,27 @@ async def request_handoff(
                     VALUES (:org, :conv, :cust, :esc)
                     RETURNING id
                 """),
-                {"org": org_id, "conv": conversation_id, "cust": customer_id, "esc": escalation_id}
+                {
+                    "org": org_id,
+                    "conv": conversation_id,
+                    "cust": customer_id,
+                    "esc": escalation_id,
+                },
             )
             await session.commit()
             handoff_id = str(result.scalar())
         except Exception as exc:
             logger.error("Failed to insert handoff request: %s", exc)
             raise
-            
+
     # 2. Add to Queue
     queue = AgentQueue(org_id)
     position = await queue.enqueue(handoff_id)
-    
+
     # 3. Broadcast to Agents
     try:
         import httpx
+
         async with httpx.AsyncClient() as client:
             await client.post(
                 f"{NOTIFICATION_URL}/api/v1/notifications/broadcast",
@@ -85,16 +94,16 @@ async def request_handoff(
                     "payload": {
                         "handoff_id": handoff_id,
                         "conversation_id": conversation_id,
-                        "position": position
-                    }
-                }
+                        "position": position,
+                    },
+                },
             )
     except Exception as exc:
         logger.warning("Failed to notify agents: %s", exc)
-        
+
     return {
         "status": "queued",
         "handoff_id": handoff_id,
         "position": position,
-        "estimated_wait_sec": position * 120 # rough estimate
+        "estimated_wait_sec": position * 120,  # rough estimate
     }

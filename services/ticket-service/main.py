@@ -155,6 +155,7 @@ def _ticket_response(row: dict[str, Any]) -> TicketResponse:
         tags = []
     elif isinstance(tags, str):
         import json
+
         try:
             tags = json.loads(tags)
         except (json.JSONDecodeError, TypeError):
@@ -354,6 +355,7 @@ app.add_middleware(
 )
 
 from shared.utils.metrics import setup_metrics
+
 setup_metrics(app)
 
 
@@ -362,7 +364,11 @@ setup_metrics(app)
 
 @app.get("/health", tags=["health"])
 async def health_check():
-    return {"status": "healthy", "service": "ticket-service", "timestamp": datetime.now(timezone.utc).isoformat()}
+    return {
+        "status": "healthy",
+        "service": "ticket-service",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 # ── Create ticket ──
@@ -420,13 +426,17 @@ async def create_ticket(
             "subcategory": body.subcategory,
             "source": body.source,
             "customer_id": str(body.customer_id),
-            "conversation_id": str(body.conversation_id) if body.conversation_id else None,
+            "conversation_id": str(body.conversation_id)
+            if body.conversation_id
+            else None,
             "status": TicketStatus.OPEN.value,
             "now": now,
         },
     )
 
-    await _record_activity(db, str(ticket_id), "created", actor_id, {"subject": body.subject})
+    await _record_activity(
+        db, str(ticket_id), "created", actor_id, {"subject": body.subject}
+    )
 
     logger.info("Ticket %s (#%d) created in org %s", ticket_id, ticket_number, org_id)
 
@@ -471,7 +481,9 @@ async def list_tickets(
 
     where = " AND ".join(conditions)
 
-    count_result = await db.execute(text(f"SELECT count(*) FROM tickets WHERE {where}"), params)  # noqa: S608
+    count_result = await db.execute(
+        text(f"SELECT count(*) FROM tickets WHERE {where}"), params
+    )  # noqa: S608
     total = count_result.scalar_one()
 
     offset = (page - 1) * page_size
@@ -521,7 +533,9 @@ async def get_ticket(
 # ── Update ticket ──
 
 
-@app.patch("/api/v1/tickets/{ticket_id}", response_model=TicketResponse, tags=["tickets"])
+@app.patch(
+    "/api/v1/tickets/{ticket_id}", response_model=TicketResponse, tags=["tickets"]
+)
 async def update_ticket(
     ticket_id: uuid.UUID,
     body: TicketUpdateRequest,
@@ -561,6 +575,7 @@ async def update_ticket(
         changes["category"] = body.category
     if body.tags is not None:
         import json
+
         updates["tags"] = json.dumps(body.tags)
         changes["tags"] = body.tags
 
@@ -714,7 +729,9 @@ async def escalate_ticket(
         raise HTTPException(status_code=404, detail="Ticket not found")
 
     if row["status"] in (TicketStatus.CLOSED.value, TicketStatus.RESOLVED.value):
-        raise HTTPException(status_code=400, detail="Cannot escalate a closed/resolved ticket")
+        raise HTTPException(
+            status_code=400, detail="Cannot escalate a closed/resolved ticket"
+        )
 
     now = datetime.now(timezone.utc)
 

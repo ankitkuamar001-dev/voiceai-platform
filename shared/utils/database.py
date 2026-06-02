@@ -30,10 +30,7 @@ if not DATABASE_URL.startswith("sqlite"):
     engine_kwargs["pool_size"] = 20
     engine_kwargs["max_overflow"] = 10
 
-engine = create_async_engine(
-    DATABASE_URL,
-    **engine_kwargs
-)
+engine = create_async_engine(DATABASE_URL, **engine_kwargs)
 
 async_session_factory = async_sessionmaker(
     engine,
