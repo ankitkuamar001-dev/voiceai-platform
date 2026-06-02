@@ -289,7 +289,9 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
         )
 
     user_id = uuid.uuid4()
-    hashed = bcrypt.hashpw(body.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    hashed = bcrypt.hashpw(body.password.encode("utf-8"), bcrypt.gensalt()).decode(
+        "utf-8"
+    )
     now = datetime.now(timezone.utc)
 
     await db.execute(

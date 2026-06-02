@@ -53,22 +53,27 @@ async def client():
 
     # Patch database module before import
     import shared.utils.database
-    with patch.object(shared.utils.database, "engine") as mock_engine, \
-         patch.object(shared.utils.database, "get_redis", return_value=_fake_redis), \
-         patch.object(shared.utils.database, "close_redis"):
 
+    with (
+        patch.object(shared.utils.database, "engine") as mock_engine,
+        patch.object(shared.utils.database, "get_redis", return_value=_fake_redis),
+        patch.object(shared.utils.database, "close_redis"),
+    ):
         # Mock engine for lifespan
         mock_conn = AsyncMock()
         mock_conn.execute = AsyncMock()
         mock_engine.begin.return_value.__aenter__ = AsyncMock(return_value=mock_conn)
         mock_engine.begin.return_value.__aexit__ = AsyncMock()
         mock_engine.dispose = AsyncMock()
-        auth_service_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../services/auth-service"))
+        auth_service_dir = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "../../services/auth-service")
+        )
         if auth_service_dir not in sys.path:
             sys.path.insert(0, auth_service_dir)
         if "main" in sys.modules:
             del sys.modules["main"]
         import main as auth_mod
+
         auth_mod.SECRET_KEY = TEST_SECRET
         app = auth_mod.app
 
@@ -80,6 +85,7 @@ async def client():
             return _fake_redis
 
         from shared.utils.database import get_db
+
         app.dependency_overrides[get_db] = override_get_db
 
         # Also patch get_redis in the auth module
@@ -118,12 +124,15 @@ async def test_register_success(client):
     _mock_db.queue_result(MockResult())  # insert
     _mock_db.queue_result(MockResult(rows=[user_row]))  # select back
 
-    resp = await client.post("/api/v1/auth/register", json={
-        "email": "new@example.com",
-        "full_name": "New User",
-        "password": "strongpass123",
-        "org_id": TEST_ORG_ID,
-    })
+    resp = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "new@example.com",
+            "full_name": "New User",
+            "password": "strongpass123",
+            "org_id": TEST_ORG_ID,
+        },
+    )
     assert resp.status_code == 201
     data = resp.json()
     assert data["email"] == "test@example.com"  # from mock row
@@ -134,12 +143,15 @@ async def test_register_duplicate_email(client):
     _mock_db.queue_result(MockResult(rows=[{"id": TEST_ORG_ID}]))  # org exists
     _mock_db.queue_result(MockResult(rows=[{"id": "existing"}]))  # duplicate!
 
-    resp = await client.post("/api/v1/auth/register", json={
-        "email": "dup@example.com",
-        "full_name": "Dup User",
-        "password": "strongpass123",
-        "org_id": TEST_ORG_ID,
-    })
+    resp = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "dup@example.com",
+            "full_name": "Dup User",
+            "password": "strongpass123",
+            "org_id": TEST_ORG_ID,
+        },
+    )
     assert resp.status_code == 409
     assert "already registered" in resp.json()["detail"]
 
@@ -148,12 +160,15 @@ async def test_register_duplicate_email(client):
 async def test_register_invalid_org(client):
     _mock_db.queue_result(MockResult(rows=[]))  # org NOT found
 
-    resp = await client.post("/api/v1/auth/register", json={
-        "email": "test@example.com",
-        "full_name": "Test",
-        "password": "strongpass123",
-        "org_id": TEST_ORG_ID,
-    })
+    resp = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "test@example.com",
+            "full_name": "Test",
+            "password": "strongpass123",
+            "org_id": TEST_ORG_ID,
+        },
+    )
     assert resp.status_code == 404
     assert "Organization" in resp.json()["detail"]
 
@@ -164,6 +179,7 @@ async def test_register_invalid_org(client):
 @pytest.mark.asyncio
 async def test_login_success(client):
     import bcrypt
+
     hashed = bcrypt.hashpw(b"correctpassword", bcrypt.gensalt()).decode("utf-8")
 
     user_row = {
@@ -178,10 +194,13 @@ async def test_login_success(client):
     _mock_db.queue_result(MockResult(rows=[user_row]))  # find user
     _mock_db.queue_result(MockResult())  # update last_login_at
 
-    resp = await client.post("/api/v1/auth/login", json={
-        "email": "test@example.com",
-        "password": "correctpassword",
-    })
+    resp = await client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "test@example.com",
+            "password": "correctpassword",
+        },
+    )
     assert resp.status_code == 200
     data = resp.json()
     assert "access_token" in data
@@ -192,21 +211,31 @@ async def test_login_success(client):
 @pytest.mark.asyncio
 async def test_login_wrong_password(client):
     import bcrypt
+
     hashed = bcrypt.hashpw(b"correctpassword", bcrypt.gensalt()).decode("utf-8")
 
-    _mock_db.queue_result(MockResult(rows=[{
-        "id": TEST_USER_ID,
-        "org_id": TEST_ORG_ID,
-        "email": "test@example.com",
-        "password_hash": hashed,
-        "user_type": "customer",
-        "status": "active",
-    }]))
+    _mock_db.queue_result(
+        MockResult(
+            rows=[
+                {
+                    "id": TEST_USER_ID,
+                    "org_id": TEST_ORG_ID,
+                    "email": "test@example.com",
+                    "password_hash": hashed,
+                    "user_type": "customer",
+                    "status": "active",
+                }
+            ]
+        )
+    )
 
-    resp = await client.post("/api/v1/auth/login", json={
-        "email": "test@example.com",
-        "password": "wrongpassword",
-    })
+    resp = await client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "test@example.com",
+            "password": "wrongpassword",
+        },
+    )
     assert resp.status_code == 401
 
 
@@ -214,10 +243,13 @@ async def test_login_wrong_password(client):
 async def test_login_unknown_user(client):
     _mock_db.queue_result(MockResult(rows=[]))  # no user found
 
-    resp = await client.post("/api/v1/auth/login", json={
-        "email": "unknown@example.com",
-        "password": "anypass",
-    })
+    resp = await client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "unknown@example.com",
+            "password": "anypass",
+        },
+    )
     assert resp.status_code == 401
 
 
@@ -225,19 +257,30 @@ async def test_login_unknown_user(client):
 async def test_login_inactive_account(client):
     import bcrypt
 
-    _mock_db.queue_result(MockResult(rows=[{
-        "id": TEST_USER_ID,
-        "org_id": TEST_ORG_ID,
-        "email": "test@example.com",
-        "password_hash": bcrypt.hashpw(b"pass123", bcrypt.gensalt()).decode("utf-8"),
-        "user_type": "customer",
-        "status": "suspended",
-    }]))
+    _mock_db.queue_result(
+        MockResult(
+            rows=[
+                {
+                    "id": TEST_USER_ID,
+                    "org_id": TEST_ORG_ID,
+                    "email": "test@example.com",
+                    "password_hash": bcrypt.hashpw(b"pass123", bcrypt.gensalt()).decode(
+                        "utf-8"
+                    ),
+                    "user_type": "customer",
+                    "status": "suspended",
+                }
+            ]
+        )
+    )
 
-    resp = await client.post("/api/v1/auth/login", json={
-        "email": "test@example.com",
-        "password": "pass123",
-    })
+    resp = await client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "test@example.com",
+            "password": "pass123",
+        },
+    )
     assert resp.status_code == 403
 
 
@@ -250,7 +293,9 @@ async def test_get_me_authenticated(client):
     _mock_db.queue_result(MockResult(rows=[user_row]))
 
     token = make_token(user_type="customer")
-    resp = await client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+    resp = await client.get(
+        "/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"}
+    )
     assert resp.status_code == 200
     assert resp.json()["email"] == "test@example.com"
 
@@ -263,7 +308,9 @@ async def test_get_me_no_token(client):
 
 @pytest.mark.asyncio
 async def test_get_me_invalid_token(client):
-    resp = await client.get("/api/v1/auth/me", headers={"Authorization": "Bearer invalid.token.here"})
+    resp = await client.get(
+        "/api/v1/auth/me", headers={"Authorization": "Bearer invalid.token.here"}
+    )
     assert resp.status_code == 401
 
 
@@ -300,7 +347,9 @@ async def test_list_users_admin_only(client):
     _mock_db.queue_result(MockResult(rows=[admin_row]))  # user rows
 
     token = make_token(user_id=TEST_ADMIN_ID, user_type="admin")
-    resp = await client.get("/api/v1/auth/users", headers={"Authorization": f"Bearer {token}"})
+    resp = await client.get(
+        "/api/v1/auth/users", headers={"Authorization": f"Bearer {token}"}
+    )
     assert resp.status_code == 200
     data = resp.json()
     assert "items" in data
@@ -313,7 +362,9 @@ async def test_list_users_non_admin_forbidden(client):
     _mock_db.queue_result(MockResult(rows=[user_row]))
 
     token = make_token(user_type="customer")
-    resp = await client.get("/api/v1/auth/users", headers={"Authorization": f"Bearer {token}"})
+    resp = await client.get(
+        "/api/v1/auth/users", headers={"Authorization": f"Bearer {token}"}
+    )
     assert resp.status_code == 403
 
 
@@ -326,6 +377,7 @@ async def test_refresh_token_success(client):
 
     # Store refresh JTI in fake redis
     from jose import jwt as jose_jwt
+
     payload = jose_jwt.decode(refresh, TEST_SECRET, algorithms=["HS256"])
     await _fake_redis.setex(f"refresh:{payload['jti']}", 86400, TEST_USER_ID)
 
