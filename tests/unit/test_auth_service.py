@@ -41,6 +41,8 @@ from tests.conftest import (
 _fake_redis = FakeRedis()
 _mock_db = MockDBSession()
 
+import shared.utils.database
+
 
 @pytest_asyncio.fixture
 async def client():
