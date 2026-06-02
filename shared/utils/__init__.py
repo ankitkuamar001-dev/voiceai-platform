@@ -4,5 +4,14 @@ from shared.utils.database import (
     RedisKeys,
     close_redis,
     get_db_context,
-)  # noqa: F401
-from shared.utils.logging import setup_logging  # noqa: F401
+)
+from shared.utils.logging import setup_logging
+
+__all__ = [
+    "get_db",
+    "get_redis",
+    "RedisKeys",
+    "close_redis",
+    "get_db_context",
+    "setup_logging",
+]
