@@ -24,7 +24,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -59,7 +59,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 
 REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
 # ── Password hashing ──
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# (Replaced passlib with native bcrypt to fix bug in github actions)
 
 # ── Security scheme ──
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -289,7 +289,7 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
         )
 
     user_id = uuid.uuid4()
-    hashed = pwd_context.hash(body.password)
+    hashed = bcrypt.hashpw(body.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
     now = datetime.now(timezone.utc)
 
     await db.execute(
@@ -344,7 +344,9 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
     )
     row = result.mappings().first()
 
-    if row is None or not pwd_context.verify(body.password, row["password_hash"]):
+    if row is None or not bcrypt.checkpw(
+        body.password.encode("utf-8"), row["password_hash"].encode("utf-8")
+    ):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     if row["status"] != UserStatus.ACTIVE.value:

@@ -163,9 +163,8 @@ async def test_register_invalid_org(client):
 
 @pytest.mark.asyncio
 async def test_login_success(client):
-    from passlib.context import CryptContext
-    pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    hashed = pwd.hash("correctpassword")
+    import bcrypt
+    hashed = bcrypt.hashpw(b"correctpassword", bcrypt.gensalt()).decode("utf-8")
 
     user_row = {
         "id": TEST_USER_ID,
@@ -192,9 +191,8 @@ async def test_login_success(client):
 
 @pytest.mark.asyncio
 async def test_login_wrong_password(client):
-    from passlib.context import CryptContext
-    pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    hashed = pwd.hash("correctpassword")
+    import bcrypt
+    hashed = bcrypt.hashpw(b"correctpassword", bcrypt.gensalt()).decode("utf-8")
 
     _mock_db.queue_result(MockResult(rows=[{
         "id": TEST_USER_ID,
@@ -225,14 +223,13 @@ async def test_login_unknown_user(client):
 
 @pytest.mark.asyncio
 async def test_login_inactive_account(client):
-    from passlib.context import CryptContext
-    pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    import bcrypt
 
     _mock_db.queue_result(MockResult(rows=[{
         "id": TEST_USER_ID,
         "org_id": TEST_ORG_ID,
         "email": "test@example.com",
-        "password_hash": pwd.hash("pass123"),
+        "password_hash": bcrypt.hashpw(b"pass123", bcrypt.gensalt()).decode("utf-8"),
         "user_type": "customer",
         "status": "suspended",
     }]))
