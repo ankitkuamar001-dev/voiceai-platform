@@ -23,7 +23,7 @@ langchain-community>=0.3,<1.0
 langgraph>=0.2,<1.0
 
 # OpenAI
-openai>=1.30,<2.0
+openai>=2.45.0,<3.0
 
 # Vector stores
 pinecone-client>=5.0,<6.0
