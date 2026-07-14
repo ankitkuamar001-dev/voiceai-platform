@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Install kubectl
-        uses: azure/setup-kubectl@v4
+        uses: azure/setup-kubectl@v5
       
       - name: Check Staging Secret
         id: check_secret
@@ -62,7 +62,7 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Install kubectl
-        uses: azure/setup-kubectl@v4
+        uses: azure/setup-kubectl@v5
         
       - name: Check Production Secret
         id: check_secret
